@@ -52,35 +52,57 @@ else:
     print("Invalid option. Defaulting to |0> state.")
     selected = "None"
 
-# --- IMPRESIÓN EN CONSOLA ---
-print(f"\n--- Quantum Circuit ({selected}) ---")
-print(qc.draw("text"))
-
+# --- CÁLCULO DE ESTADO Y PROBABILIDADES ---
 state = Statevector.from_instruction(qc)
-
 prob_0 = abs(state[0]) ** 2
 prob_1 = abs(state[1]) ** 2
 
+# Impresión en consola
+print(f"\n--- Quantum Circuit ({selected}) ---")
+print(qc.draw("text"))
 print("\n--- Measurement Probabilities ---")
 print(f"P(|0⟩): {prob_0:.4f} ({prob_0 * 100:.1f}%)")
 print(f"P(|1⟩): {prob_1:.4f} ({prob_1 * 100:.1f}%)")
 
-# --- VENTANA GRÁFICA (CIRCUITO + ESFERA DE BLOCH) ---
-fig = plt.figure(figsize=(10, 4.5))
+# --- VENTANA GRÁFICA (3 PANELES) ---
+fig = plt.figure(figsize=(14, 4.5))
 fig.canvas.manager.set_window_title("Qubit State Explorer")
 
-# 1. Subplot para el Circuito
-ax_circuit = fig.add_subplot(1, 2, 1)
+# Panel 1: Circuito Cuántico
+ax_circuit = fig.add_subplot(1, 3, 1)
 circuit_drawer(qc, output="mpl", ax=ax_circuit)
-ax_circuit.set_title(f"Circuit: {selected}", fontsize=12, fontweight="bold")
+ax_circuit.set_title(f"Circuit: {selected}", fontsize=11, fontweight="bold")
 
-# 2. Subplot para la Esfera de Bloch (Coordenadas X, Y, Z)
+# Panel 2: Esfera de Bloch
 x = 2 * (state[0].real * state[1].real + state[0].imag * state[1].imag)
 y = 2 * (state[0].imag * state[1].real - state[0].real * state[1].imag)
 z = abs(state[0]) ** 2 - abs(state[1]) ** 2
 
-ax_bloch = fig.add_subplot(1, 2, 2, projection="3d")
+ax_bloch = fig.add_subplot(1, 3, 2, projection="3d")
 plot_bloch_vector([x, y, z], ax=ax_bloch, title=f"Bloch Sphere ({selected})")
+
+# Panel 3: Probabilidades de Medición (Gráfico de Barras)
+ax_prob = fig.add_subplot(1, 3, 3)
+states = ["|0⟩", "|1⟩"]
+probabilities = [prob_0 * 100, prob_1 * 100]
+colors = ["#1f77b4", "#ff7f0e"]
+
+bars = ax_prob.bar(states, probabilities, color=colors, width=0.5)
+ax_prob.set_ylim(0, 105)
+ax_prob.set_ylabel("Probability (%)")
+ax_prob.set_title("Measurement Probabilities", fontsize=11, fontweight="bold")
+
+# Agregar porcentaje encima de cada barra
+for bar in bars:
+    yval = bar.get_height()
+    ax_prob.text(
+        bar.get_x() + bar.get_width() / 2,
+        yval + 2,
+        f"{yval:.1f}%",
+        ha="center",
+        va="bottom",
+        fontweight="bold",
+    )
 
 plt.tight_layout()
 plt.show()
